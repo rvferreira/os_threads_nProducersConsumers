@@ -2,7 +2,7 @@
  ============================================================================
  Name        : so_nProdutorConsumidor.c
  Authors     : Raphael Ferreira		7143889
- 	 	 	   Jessika Darambaris
+ 	 	 	   Jessika Darambaris	7961026
 			   Andressa Andriao		7547020
  Version     : 1.0
  Copyright   : Código desenvolvido para a disciplina de SO. Use à vontz!
