@@ -1,7 +1,9 @@
 /*
  ============================================================================
  Name        : so_nProdutorConsumidor.c
- Author      : Raphael Ferreira, Jessika Darambaris e Andressa Andriao
+ Authors     : Raphael Ferreira		7143889
+ 	 	 	   Jessika Darambaris
+			   Andressa Andriao		7547020
  Version     : 1.0
  Copyright   : Código desenvolvido para a disciplina de SO. Use à vontz!
  Description : N Produtores e consumidores distribuidos em threads
@@ -13,11 +15,11 @@
 #include <pthread.h>
 #include <semaphore.h>
 
-#define MAX_PRODUCED 100
-#define MAX_QUEUE 10
+#define MAX_PRODUCED 20
+#define MAX_QUEUE 8
 #define N_PROD_CONS 3
 
-sem_t  mutex, empty, full, max_produced_empty, max_produced_full, acochambrada, acochambrada2;
+sem_t  mutex, empty, full, produced_ctrl, consumed_ctrl;
 
 int queue[MAX_QUEUE], item_available=0, produced=0, consumed=0;
 
@@ -42,7 +44,7 @@ int extract_from_queue(int cons_id) {
 
 void process_item(int my_item) {
 	static int printed=0;
-	//	printf("Printed:%d, value:%d, queued:%d \n", printed++, my_item, item_available);
+	printf("Printed:%d, value:%d, queued:%d \n", printed++, my_item, item_available);
 	return;
 }
 
@@ -51,18 +53,15 @@ void *producer(void *prod_id) {
 	int item;
 
 	while(1){
-		sem_wait(&acochambrada);
-		if (produced < MAX_PRODUCED ) {
+		if (!sem_trywait(&produced_ctrl)) {
 			item = create_item();
 			sem_wait(&empty);
 			sem_wait(&mutex);
 			insert_into_queue(item, (int) prod_id);
 			sem_post(&mutex);
 			sem_post(&full);
-			sem_post(&acochambrada);
 		}
 		else {
-			sem_post(&acochambrada);
 			break;
 		}
 	}
@@ -77,18 +76,15 @@ void *consumer(void *cons_id) {
 	int my_item = 0;
 
 	while(1){
-		sem_wait(&acochambrada2);
-		if (consumed < MAX_PRODUCED) {
+		if (!sem_trywait(&consumed_ctrl)) {
 			sem_wait(&full);
 			sem_wait(&mutex);
 			my_item = extract_from_queue((int) cons_id);
 			sem_post(&mutex);
 			sem_post(&empty);
 			process_item(my_item);
-			sem_post(&acochambrada2);
 		}
 		else{
-			sem_post(&acochambrada2);
 			break;
 		}
 
@@ -110,8 +106,9 @@ int main(void) {
 	sem_init (&mutex, 0 , 1);
 	sem_init(&empty, 0, MAX_QUEUE);
 	sem_init(&full, 0, 0);
-	sem_init(&acochambrada, 0, N_PROD_CONS);
-	sem_init(&acochambrada2, 0, N_PROD_CONS);
+
+	sem_init(&produced_ctrl, 0, MAX_PRODUCED);
+	sem_init(&consumed_ctrl, 0, MAX_PRODUCED);
 
 	int i;
 
